@@ -65,7 +65,7 @@ int main() {
                 int testY = (int)(playerY + eyeY * distanceToWall);
                 
                 // Check out of bounds
-                if (testX < 0 || testX > mapWidth || testY < 0 || testY > mapHeight) {
+                if (testX < 0 || testX >= mapWidth || testY < 0 || testY >= mapHeight) {
                     hitWall = true;
                     distanceToWall = depth;
                 }
