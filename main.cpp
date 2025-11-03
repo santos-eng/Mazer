@@ -2,6 +2,7 @@
 #include <string>
 #include <Windows.h>
 #include <cmath>
+#include <chrono>
 
 int screenWidth = 120;
 int screenHeight = 40;
@@ -42,8 +43,24 @@ int main() {
     map += L"#..............#";
     map += L"################";
 
+    auto tp1 = std::chrono::system_clock::now();
+    auto tp2 = std::chrono::system_clock::now();
+
     // Game Loop
     while (1) {
+        tp2 = std::chrono::system_clock::now();
+        std::chrono::duration<float> elapsedTime = tp2 - tp1;
+        tp1 = tp2;
+        float timeDelta = elapsedTime.count(); // tick count
+
+
+        // CCW Rotation
+        if (GetAsyncKeyState((unsigned short)'A') & 0x8000) // MSB is high when key pressed
+            playerA -= (0.1f) * timeDelta;
+        if (GetAsyncKeyState((unsigned short)'D') & 0x8000)
+            playerA += (0.1f) * timeDelta;
+        
+
         for (int x = 0; x < screenWidth; x++) {
             // playerA bisects the FOV, so calculate rayAngles from -FOV/2 to +FOV/2
             float rayAngle = (playerA - FOV / 2.0f) + ((float)x / (float)screenWidth) * FOV;
