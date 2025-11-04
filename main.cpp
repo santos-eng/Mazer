@@ -3,6 +3,8 @@
 #include <Windows.h>
 #include <cmath>
 #include <chrono>
+#include <vector>
+#include <algorithm>
 // to do, use the mouse for moving around in ccw and cw dir
 // pause screen to change fov
 
@@ -29,19 +31,19 @@ int main() {
 
     std::wstring map;
     map += L"################";
-    map += L"#..............#";
-    map += L"#..............#";
+    map += L"#.......#......#";
+    map += L"#.......#......#";
     map += L"#..............#";
     map += L"#..............#";
     map += L"#..........#...#";
     map += L"#..........#...#";
+    map += L"#..............#";
+    map += L"#..............#";
+    map += L"#..............#";
     map += L"#..............#";
     map += L"#..............#";
     map += L"#..............#";
     map += L"#......#########";
-    map += L"#..............#";
-    map += L"#..............#";
-    map += L"#..............#";
     map += L"#..............#";
     map += L"################";
 
@@ -85,11 +87,11 @@ int main() {
 
             float distanceToWall = 0;
             bool hitWall = false;
+            bool boundary = false; // checking for the corner of a cell
 
             // Create unit vector to represent view direction. Unit vec of (0,1) indicates straight down on minimap
             float eyeX = std::sinf(rayAngle);
             float eyeY = std::cosf(rayAngle);
- 
 
             while (!hitWall && distanceToWall < depth) {
                 distanceToWall += 0.1f;
@@ -109,6 +111,35 @@ int main() {
                     // Convert x and y into a 1D plane
                     if (map[testY * mapWidth + testX] == '#') { 
                         hitWall = true; 
+
+                        // Calculate the two closest perfect corners and cast a ray from said corner to player
+                        // Compare this angle to rays cast from player. 
+                        // Two smallest angle deltas will be corners of boundary cells
+
+                        std::vector<std::pair<float,float>> p;
+
+                        // loop over four corners of each cell
+                        for (int tx = 0; tx < 2; tx++) {
+                            for (int ty = 0; ty < 2; ty++) {
+                                //vector from perfect corner to player
+                                float vy = (float)testY + ty - playerY;
+                                float vx = (float)testX + tx - playerX;
+                                float dist = sqrt(vx*vx + vy*vy);
+                                float dotProd = (eyeX * vx / dist) + (eyeY * vy / dist);
+                                p.push_back(std::make_pair(dist,dotProd));
+                            }
+                        }
+
+                        // Find the two smallest angles, only O(4) ~ O(1) time
+                        std::sort(p.begin(),p.end(),[](const std::pair<float,float>& a, const std::pair<float,float>& b) {return a.first < b.first; });
+                        float bound = 0.01;
+                        if (acos(p.at(0).second) < bound) // If the angle between the perfect corner ray and current ray < 0.05 rad
+                            boundary = true;
+                        if (acos(p.at(1).second) < bound) 
+                            boundary = true;
+                        //if (acos(p.at(2).second) < bound) 
+                            //boundary = true;
+                
                     }
                 }
             } 
@@ -129,6 +160,9 @@ int main() {
                 shade = 0x2591; // light shade
             else
                 shade = ' '; // very far no shade
+
+            if (boundary)
+                shade = ' ';
 
             // top to bottom y coord
             for (int y = 0; y < screenHeight; y++) {
@@ -152,6 +186,18 @@ int main() {
             }
 
         }
+        //Stats
+        swprintf_s(screen, 40, L"X=%3.2f, Y =%3.2f, A=%3.2f FPS=%3.2f", playerX, playerY, playerA, 1.0f / timeDelta);
+
+        //minimap
+        for (int nx = 0; nx < mapWidth; nx++) {
+            for (int ny = 0; ny < mapHeight; ny++) {
+                screen[(ny + 1)  *screenWidth + nx] = map[ny * mapWidth + nx];
+            }   
+        }
+
+        screen[((int)playerY + 1) * screenWidth + (int)playerX] = 'P';
+
         screen[screenWidth * screenHeight - 1] = '\0'; // Stop outputting the string 
         WriteConsoleOutputCharacterW(console, screen, screenWidth * screenHeight, {0,0}, &bytesWritten);
     }
