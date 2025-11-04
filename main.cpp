@@ -3,6 +3,8 @@
 #include <Windows.h>
 #include <cmath>
 #include <chrono>
+// to do, use the mouse for moving around in ccw and cw dir
+// pause screen to change fov
 
 int screenWidth = 120;
 int screenHeight = 40;
@@ -31,12 +33,12 @@ int main() {
     map += L"#..............#";
     map += L"#..............#";
     map += L"#..............#";
+    map += L"#..........#...#";
+    map += L"#..........#...#";
     map += L"#..............#";
     map += L"#..............#";
     map += L"#..............#";
-    map += L"#..............#";
-    map += L"#..............#";
-    map += L"#..............#";
+    map += L"#......#########";
     map += L"#..............#";
     map += L"#..............#";
     map += L"#..............#";
@@ -56,11 +58,27 @@ int main() {
 
         // CCW Rotation
         if (GetAsyncKeyState((unsigned short)'A') & 0x8000) // MSB is high when key pressed
-            playerA -= (0.1f) * timeDelta;
+            playerA -= (1.5f) * timeDelta;
         if (GetAsyncKeyState((unsigned short)'D') & 0x8000)
-            playerA += (0.1f) * timeDelta;
+            playerA += (1.5f) * timeDelta;
+        if (GetAsyncKeyState((unsigned short)'W') & 0x8000) {
+            playerX += std::sinf(playerA) * 5.0f * timeDelta;
+            playerY += std::cosf(playerA) * 5.0f * timeDelta;
+            if (map[(int)playerY * mapWidth + (int)playerX] == '#') {
+                playerX -= std::sinf(playerA) * 5.0f * timeDelta;
+                playerY -= std::cosf(playerA) * 5.0f * timeDelta;
+            }
+        }
+        if (GetAsyncKeyState((unsigned short)'S') & 0x8000 && map[(int)playerY * mapWidth + (int)playerX] != '#') {
+            playerX -= std::sinf(playerA) * 5.0f * timeDelta;
+            playerY -= std::cosf(playerA) * 5.0f * timeDelta;
+            if (map[(int)playerY * mapWidth + (int)playerX] == '#') {
+                playerX += std::sinf(playerA) * 5.0f * timeDelta;
+                playerY += std::cosf(playerA) * 5.0f * timeDelta;
+            }
+        }
         
-
+        // for every ray in the fov
         for (int x = 0; x < screenWidth; x++) {
             // playerA bisects the FOV, so calculate rayAngles from -FOV/2 to +FOV/2
             float rayAngle = (playerA - FOV / 2.0f) + ((float)x / (float)screenWidth) * FOV;
@@ -68,7 +86,7 @@ int main() {
             float distanceToWall = 0;
             bool hitWall = false;
 
-            // Create unit vector to represent view direction
+            // Create unit vector to represent view direction. Unit vec of (0,1) indicates straight down on minimap
             float eyeX = std::sinf(rayAngle);
             float eyeY = std::cosf(rayAngle);
  
@@ -98,13 +116,39 @@ int main() {
             int ceiling = (float)(screenHeight / 2.0) - screenHeight / ((float)distanceToWall);
             int floor = screenHeight - ceiling;
 
+            // hex vals: dark shade 2593, medium shade 2592, light shade 2591, full shade 2588
+            short shade = ' ';
+
+            if (distanceToWall <= depth / 4.0f)
+                shade = 0x2588; // very close full shade
+            else if (distanceToWall < depth / 3.0f)
+                shade = 0x2593; // dark shade
+            else if (distanceToWall < depth / 2.0f)
+                shade = 0x2592; // medium shade
+            else if (distanceToWall < depth)
+                shade = 0x2591; // light shade
+            else
+                shade = ' '; // very far no shade
+
+            // top to bottom y coord
             for (int y = 0; y < screenHeight; y++) {
-                if (y < ceiling) // top to bottom y coord
+                if (y < ceiling) 
                     screen[y * screenWidth + x] = ' ';
                 else if (y > ceiling && y <= floor)
-                    screen[y * screenWidth + x] = '#';
-                else 
-                    screen[y * screenWidth + x] = ' '; 
+                    screen[y * screenWidth + x] = shade;
+                else {
+                    float brightness = 1.0f - (((float)y - screenHeight / 2.0f) / ((float)screenHeight / 2.0f)); // close floors brighter
+                    short floorShade = ' ';
+                    if (brightness < 0.25)
+                        floorShade = '#';
+                    else if (brightness < 0.5) 
+                        floorShade = 'x';
+                    else if (brightness < 0.75) 
+                        floorShade = '.';
+                    else if (brightness < 0.9) 
+                        floorShade = '-';
+                    screen[y * screenWidth + x] = floorShade; 
+                }
             }
 
         }
