@@ -137,6 +137,7 @@ Character Set -> Use Unicode. Thanks! - Javidx9
 #include <thread>
 #include <atomic>
 #include <cstring>
+#include <cmath>
 #include <condition_variable>
 
 enum COLOUR
@@ -412,7 +413,7 @@ public:
 			return Error(L"Screen Width / Font Width Too Big");
 
 		// Set Physical Console Window Size
-		m_rectWindow = { 0, 0, (short)m_nScreenWidth - 1, (short)m_nScreenHeight - 1 };
+		m_rectWindow = { 0, 0, static_cast<short>(m_nScreenWidth - 1), static_cast<short>(m_nScreenHeight - 1) };
 		if (!SetConsoleWindowInfo(m_hConsole, TRUE, &m_rectWindow))
 			return Error(L"SetConsoleWindowInfo");
 
@@ -952,7 +953,7 @@ private:
 
 				// Update Title & Present Screen Buffer
 				wchar_t s[256];
-				swprintf_s(s, 256, L"OneLoneCoder.com - Console Game Engine - %s - FPS: %3.2f", m_sAppName.c_str(), 1.0f / fElapsedTime);
+				swprintf_s(s, 256, L"Console Game Engine - %s - FPS: %3.2f", m_sAppName.c_str(), 1.0f / fElapsedTime);
 				SetConsoleTitle(s);
 				WriteConsoleOutput(m_hConsole, m_bufScreen, { (short)m_nScreenWidth, (short)m_nScreenHeight }, { 0,0 }, &m_rectWindow);
 			}
@@ -1192,9 +1193,9 @@ protected: // Audio Engine =====================================================
 	}
 
 	// Static wrapper for sound card handler
-	static void CALLBACK waveOutProcWrap(HWAVEOUT hWaveOut, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2)
+	static void CALLBACK waveOutProcWrap(HWAVEOUT hWaveOut, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 	{
-		((olcConsoleGameEngine*)dwInstance)->waveOutProc(hWaveOut, uMsg, dwParam1, dwParam2);
+		((olcConsoleGameEngine*)dwInstance)->waveOutProc(hWaveOut, uMsg, (DWORD)dwParam1, (DWORD)dwParam2);
 	}
 
 	// Audio thread. This loop responds to requests from the soundcard to fill 'blocks'

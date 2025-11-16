@@ -48,7 +48,7 @@ public:
             playerA -= (1.5f) * timeDelta;
 
         // CW Rotation
-        if (m_keys[L'd'].bHeld)
+        if (m_keys[L'D'].bHeld)
             playerA += (1.5f) * timeDelta;
         
         // Forward Movement
