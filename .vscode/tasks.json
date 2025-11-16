@@ -12,7 +12,8 @@
                 "-D_UNICODE",
                 "${file}",
                 "-o",
-                "${fileDirname}\\${fileBasenameNoExtension}.exe"
+                "${fileDirname}\\${fileBasenameNoExtension}.exe",
+                "-lwinmm"
             ],
             "options": {
                 "cwd": "${fileDirname}"
