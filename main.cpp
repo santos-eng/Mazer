@@ -1,89 +1,82 @@
-#include <iostream>
+#include "olcConsoleGameEngine.h"
 #include <string>
-#include <Windows.h>
 #include <cmath>
-#include <chrono>
-#include <vector>
 #include <algorithm>
-// to do, use the mouse for moving around in ccw and cw dir
 // pause screen to change fov
 
-int screenWidth = 120;
-int screenHeight = 40;
+class MazerFPS : public olcConsoleGameEngine {
+    // Player Position
+    float playerX = 8.0f;
+    float playerY = 8.0f;
+    float playerA = 0.0f; // player view angle
 
-// Player Position
-float playerX = 8.0f;
-float playerY = 8.0f;
-float playerA = 0.0f; // player view angle
+    // Minimap size
+    int mapHeight = 16;
+    int mapWidth = 16;
 
-// Minimap size
-int mapHeight = 16;
-int mapWidth = 16;
-
-float FOV = 3.14159f / 4.0f;
-float depth = 16.0f;
-
-int main() {
-    wchar_t *screen = new wchar_t[screenWidth * screenHeight];
-    HANDLE console = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);    
-    SetConsoleActiveScreenBuffer(console);
-    DWORD bytesWritten = 0;
+    float FOV = 3.14159f / 4.0f;
+    float depth = 16.0f;
 
     std::wstring map;
-    map += L"################";
-    map += L"#.......#......#";
-    map += L"#.......#......#";
-    map += L"#..............#";
-    map += L"#..............#";
-    map += L"#..........#...#";
-    map += L"#..........#...#";
-    map += L"#..............#";
-    map += L"#..............#";
-    map += L"#..............#";
-    map += L"#..............#";
-    map += L"#..............#";
-    map += L"#..............#";
-    map += L"#......#########";
-    map += L"#..............#";
-    map += L"################";
+public:
+    MazerFPS() {
+        m_sAppName = L"Mazer First Person Shooter";
+    }
 
-    auto tp1 = std::chrono::system_clock::now();
-    auto tp2 = std::chrono::system_clock::now();
-
-    // Game Loop
-    while (1) {
-        tp2 = std::chrono::system_clock::now();
-        std::chrono::duration<float> elapsedTime = tp2 - tp1;
-        tp1 = tp2;
-        float timeDelta = elapsedTime.count(); // tick count
-
-
+    virtual bool OnUserCreate() override {
+        map += L"################";
+        map += L"#.......#......#";
+        map += L"#.......#......#";
+        map += L"#..............#";
+        map += L"#..............#";
+        map += L"#..........#...#";
+        map += L"#..........#...#";
+        map += L"#..............#";
+        map += L"#..............#";
+        map += L"#..............#";
+        map += L"#..............#";
+        map += L"#..............#";
+        map += L"#..............#";
+        map += L"#......#########";
+        map += L"#..............#";
+        map += L"################";
+        return true;
+    }
+    virtual bool OnUserUpdate(float timeDelta) override {
         // CCW Rotation
-        if (GetAsyncKeyState((unsigned short)'A') & 0x8000) // MSB is high when key pressed
+        if (m_keys[L'A'].bHeld)
             playerA -= (1.5f) * timeDelta;
-        if (GetAsyncKeyState((unsigned short)'D') & 0x8000)
+
+        // CW Rotation
+        if (m_keys[L'd'].bHeld)
             playerA += (1.5f) * timeDelta;
-        if (GetAsyncKeyState((unsigned short)'W') & 0x8000) {
+        
+        // Forward Movement
+        if (m_keys[L'W'].bHeld) {
             playerX += std::sinf(playerA) * 5.0f * timeDelta;
             playerY += std::cosf(playerA) * 5.0f * timeDelta;
+            // Prevent walking out of bounds
             if (map[(int)playerY * mapWidth + (int)playerX] == '#') {
                 playerX -= std::sinf(playerA) * 5.0f * timeDelta;
                 playerY -= std::cosf(playerA) * 5.0f * timeDelta;
             }
         }
-        if (GetAsyncKeyState((unsigned short)'S') & 0x8000 && map[(int)playerY * mapWidth + (int)playerX] != '#') {
+
+        // Backward Movement     
+        if (m_keys[L'S'].bHeld) {
             playerX -= std::sinf(playerA) * 5.0f * timeDelta;
             playerY -= std::cosf(playerA) * 5.0f * timeDelta;
+            // Prevent reversing out of bounds
             if (map[(int)playerY * mapWidth + (int)playerX] == '#') {
                 playerX += std::sinf(playerA) * 5.0f * timeDelta;
                 playerY += std::cosf(playerA) * 5.0f * timeDelta;
             }
         }
-        
+
         // for every ray in the fov
-        for (int x = 0; x < screenWidth; x++) {
+        for (int x = 0; x < ScreenWidth(); x++) {
             // playerA bisects the FOV, so calculate rayAngles from -FOV/2 to +FOV/2
-            float rayAngle = (playerA - FOV / 2.0f) + ((float)x / (float)screenWidth) * FOV;
+            float rayAngle = (playerA - FOV / 2.0f) + ((float)x / (float)ScreenWidth()) * FOV;
 
             float distanceToWall = 0;
             bool hitWall = false;
@@ -144,8 +137,8 @@ int main() {
                 }
             } 
             // Walls that are further away appear to have larger ceilings and floors
-            int ceiling = (float)(screenHeight / 2.0) - screenHeight / ((float)distanceToWall);
-            int floor = screenHeight - ceiling;
+            int ceiling = (float)(ScreenHeight() / 2.0) - ScreenHeight() / ((float)distanceToWall);
+            int floor = ScreenHeight() - ceiling;
 
             // hex vals: dark shade 2593, medium shade 2592, light shade 2591, full shade 2588
             short shade = ' ';
@@ -165,13 +158,13 @@ int main() {
                 shade = ' ';
 
             // top to bottom y coord
-            for (int y = 0; y < screenHeight; y++) {
-                if (y < ceiling) 
-                    screen[y * screenWidth + x] = ' ';
+            for (int y = 0; y < ScreenHeight(); y++) {
+                if (y <= ceiling) 
+                    Draw(x, y, L' ');
                 else if (y > ceiling && y <= floor)
-                    screen[y * screenWidth + x] = shade;
+                    Draw(x, y, shade);
                 else {
-                    float brightness = 1.0f - (((float)y - screenHeight / 2.0f) / ((float)screenHeight / 2.0f)); // close floors brighter
+                    float brightness = 1.0f - (((float)y - ScreenHeight() / 2.0f) / ((float)ScreenHeight() / 2.0f)); // close floors brighter
                     short floorShade = ' ';
                     if (brightness < 0.25)
                         floorShade = '#';
@@ -181,28 +174,28 @@ int main() {
                         floorShade = '.';
                     else if (brightness < 0.9) 
                         floorShade = '-';
-                    screen[y * screenWidth + x] = floorShade; 
+                    Draw(x, y, floorShade);
                 }
             }
 
         }
-        //Stats
-        swprintf_s(screen, 40, L"X=%3.2f, Y =%3.2f, A=%3.2f FPS=%3.2f", playerX, playerY, playerA, 1.0f / timeDelta);
 
         //minimap
-        for (int nx = 0; nx < mapWidth; nx++) {
-            for (int ny = 0; ny < mapHeight; ny++) {
-                screen[(ny + 1)  *screenWidth + nx] = map[ny * mapWidth + nx];
-            }   
-        }
+        for (int nx = 0; nx < mapWidth; nx++)
+            for (int ny = 0; ny < mapHeight; ny++)
+                Draw(nx + 1, ny + 1, map[ny * mapWidth + nx]);
+        Draw(1 + (int)playerY, 1 + (int)playerX, L'P');
 
-        screen[((int)playerY + 1) * screenWidth + (int)playerX] = 'P';
-
-        screen[screenWidth * screenHeight - 1] = '\0'; // Stop outputting the string 
-        WriteConsoleOutputCharacterW(console, screen, screenWidth * screenHeight, {0,0}, &bytesWritten);
+        return true;
     }
 
+};
 
 
+
+int main() {
+    MazerFPS game;
+    game.ConstructConsole(120, 80, 8, 8);
+    game.Start();
     return 0;
 }
