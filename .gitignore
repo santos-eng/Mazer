@@ -1,7 +1,11 @@
+# Visual Studio
 .vs/
-x64/
+*.vcxproj.user
+*.suo
+*.user
+*.log
+bin/
+obj/
 Debug/
 Release/
-*.user
-*.suo
-*.VC.db
+x64/
