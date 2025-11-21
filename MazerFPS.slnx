@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="Mazer/Mazer.vcxproj" Id="d5a38ca7-6319-4e02-bcb1-f38c097b7cb4" />
+</Solution>
