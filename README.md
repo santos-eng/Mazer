@@ -60,10 +60,9 @@ This project was altered in V1.1 to interface with the olcGameEngine created by 
   <img src="readme_media/playthrough.gif" width="500">
 </p>
 
-* If move left and 
-
-
-
+* Use W and S to move forward and backward, respecitvely.
+* A and D will rotate the user CCW and CW, repsectively.
+* Q and E will allow strafing left and right, respectively.
 
 
 [cpp]: https://img.shields.io/badge/C++-00599C?style=flat-square&logo=C%2B%2B&logoColor=white
