@@ -24,7 +24,7 @@ class MazerFPS : public olcConsoleGameEngine {
     std::wstring map;
 public:
     MazerFPS() {
-        m_sAppName = L"Mazer First Person Shooter";
+        m_sAppName = L"Mazer";
     }
 
     virtual bool OnUserCreate() override {
