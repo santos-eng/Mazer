@@ -56,9 +56,7 @@ This project was altered in V1.1 to interface with the olcGameEngine created by 
 3. Build and run!
 
 ## Usage
-<p align="center">
-  <img src="readme_media/playthrough.gif" width="500">
-</p>
+![Demo-Gif](https://github.com/santos-eng/Mazer/main/readme_media/clip.gif)
 
 * Use W and S to move forward and backward, respecitvely.
 * A and D will rotate the user CCW and CW, repsectively.
